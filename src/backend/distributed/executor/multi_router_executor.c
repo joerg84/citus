@@ -58,6 +58,9 @@ static uint64 ReturnRowsFromTuplestore(uint64 tupleCount, TupleDesc tupleDescrip
 									   DestReceiver *destination,
 									   Tuplestorestate *tupleStore);
 static void DeparseShardQuery(Query *query, Task *task, StringInfo queryString);
+static void ExtractParametersFromParamListInfo(ParamListInfo paramListInfo,
+											   Oid **parameterTypes,
+											   const char ***parameterValues);
 static bool SendQueryInSingleRowMode(PGconn *connection, char *query,
 									 ParamListInfo paramListInfo);
 static bool StoreQueryResult(MaterialState *routerState, PGconn *connection,
@@ -527,43 +530,12 @@ SendQueryInSingleRowMode(PGconn *connection, char *query, ParamListInfo paramLis
 
 	if (paramListInfo != NULL)
 	{
-		int parameterIndex = 0;
 		int parameterCount = paramListInfo->numParams;
-		Oid *parameterTypes = palloc(parameterCount * sizeof(Oid));
-		const char **parameterValues = palloc(parameterCount * sizeof(char *));
+		Oid *parameterTypes = NULL;
+		const char **parameterValues = NULL;
 
-		/* get parameter types and values */
-		for (parameterIndex = 0; parameterIndex < parameterCount; parameterIndex++)
-		{
-			ParamExternData *parameterData = &paramListInfo->params[parameterIndex];
-			Oid typeOutputFunctionId = InvalidOid;
-			bool variableLengthType = false;
-
-			/*
-			 * Use 0 for data types where the oid values can be different on
-			 * the master and worker nodes. Therefore, the worker nodes can
-			 * infer the correct oid.
-			 */
-			if (parameterData->ptype >= FirstNormalObjectId)
-			{
-				parameterTypes[parameterIndex] = 0;
-			}
-			else
-			{
-				parameterTypes[parameterIndex] = parameterData->ptype;
-			}
-
-			if (parameterData->isnull)
-			{
-				parameterValues[parameterIndex] = NULL;
-				continue;
-			}
-
-			getTypeOutputInfo(parameterData->ptype, &typeOutputFunctionId,
-							  &variableLengthType);
-			parameterValues[parameterIndex] = OidOutputFunctionCall(typeOutputFunctionId,
-																	parameterData->value);
-		}
+		ExtractParametersFromParamListInfo(paramListInfo, &parameterTypes,
+										   &parameterValues);
 
 		querySent = PQsendQueryParams(connection, query, parameterCount, parameterTypes,
 									  parameterValues, NULL, NULL, 0);
@@ -587,6 +559,55 @@ SendQueryInSingleRowMode(PGconn *connection, char *query, ParamListInfo paramLis
 	}
 
 	return true;
+}
+
+
+/*
+ * ExtractParametersFromParamListInfo extracts parameter types and values from
+ * the given ParamListInfo structure, and fills parameter type and value arrays.
+ */
+static void
+ExtractParametersFromParamListInfo(ParamListInfo paramListInfo, Oid **parameterTypes,
+								   const char ***parameterValues)
+{
+	int parameterIndex = 0;
+	int parameterCount = paramListInfo->numParams;
+
+	*parameterTypes = (Oid *) palloc0(parameterCount * sizeof(Oid));
+	*parameterValues = (const char **) palloc0(parameterCount * sizeof(char *));
+
+	/* get parameter types and values */
+	for (parameterIndex = 0; parameterIndex < parameterCount; parameterIndex++)
+	{
+		ParamExternData *parameterData = &paramListInfo->params[parameterIndex];
+		Oid typeOutputFunctionId = InvalidOid;
+		bool variableLengthType = false;
+
+		/*
+		 * Use 0 for data types where the oid values can be different on
+		 * the master and worker nodes. Therefore, the worker nodes can
+		 * infer the correct oid.
+		 */
+		if (parameterData->ptype >= FirstNormalObjectId)
+		{
+			(*parameterTypes)[parameterIndex] = 0;
+		}
+		else
+		{
+			(*parameterTypes)[parameterIndex] = parameterData->ptype;
+		}
+
+		if (parameterData->isnull)
+		{
+			(*parameterValues)[parameterIndex] = NULL;
+			continue;
+		}
+
+		getTypeOutputInfo(parameterData->ptype, &typeOutputFunctionId,
+						  &variableLengthType);
+		(*parameterValues)[parameterIndex] = OidOutputFunctionCall(typeOutputFunctionId,
+																   parameterData->value);
+	}
 }
 
 
