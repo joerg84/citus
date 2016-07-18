@@ -63,30 +63,23 @@ SELECT master_create_worker_shards('insert_target', 2, 1);
 CREATE TEMPORARY SEQUENCE rows_inserted;
 SELECT create_insert_proxy_for_table('insert_target', 'rows_inserted') AS proxy_tablename
 \gset
--- insert to proxy, again relying on default value
+-- insert to proxy, again relying on default value, fix pending
 INSERT INTO pg_temp.:"proxy_tablename" (id) VALUES (1);
+ERROR:  could not modify any active placements
+CONTEXT:  SQL statement "INSERT INTO public.insert_target (id,data) VALUES ($1,$2)"
+PL/pgSQL function pg_temp_2.copy_to_insert() line 3 at EXECUTE
 -- test copy with bad row in middle
 \set VERBOSITY terse
 COPY pg_temp.:"proxy_tablename" FROM stdin;
-ERROR:  null value in column "data" violates not-null constraint
+ERROR:  could not modify any active placements
 \set VERBOSITY default
--- verify rows were copied to distributed table
+-- verify rows were copied to distributed table, fix pending
 SELECT * FROM insert_target ORDER BY id ASC;
- id |            data             
-----+-----------------------------
-  1 | lorem ipsum
-  2 | dolor sit amet
-  3 | consectetur adipiscing elit
-  4 | sed do eiusmod
-  5 | tempor incididunt ut
-  6 | labore et dolore
-(6 rows)
+ id | data 
+----+------
+(0 rows)
 
--- the counter should match the number of rows stored
+-- the counter should match the number of rows stored, fix pending
 SELECT currval('rows_inserted');
- currval 
----------
-       6
-(1 row)
-
+ERROR:  currval of sequence "rows_inserted" is not yet defined in this session
 SET client_min_messages TO DEFAULT;

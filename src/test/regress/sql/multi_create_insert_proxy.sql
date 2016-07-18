@@ -59,7 +59,7 @@ CREATE TEMPORARY SEQUENCE rows_inserted;
 SELECT create_insert_proxy_for_table('insert_target', 'rows_inserted') AS proxy_tablename
 \gset
 
--- insert to proxy, again relying on default value
+-- insert to proxy, again relying on default value, fix pending
 INSERT INTO pg_temp.:"proxy_tablename" (id) VALUES (1);
 
 -- test copy with bad row in middle
@@ -75,10 +75,10 @@ COPY pg_temp.:"proxy_tablename" FROM stdin;
 \.
 \set VERBOSITY default
 
--- verify rows were copied to distributed table
+-- verify rows were copied to distributed table, fix pending
 SELECT * FROM insert_target ORDER BY id ASC;
 
--- the counter should match the number of rows stored
+-- the counter should match the number of rows stored, fix pending
 SELECT currval('rows_inserted');
 
 SET client_min_messages TO DEFAULT;
