@@ -771,21 +771,19 @@ TargetShardIntervalForModify(Query *query, RelationRestrictionContext *restricti
 	DistTableCacheEntry *cacheEntry = DistributedTableCacheEntry(distributedTableId);
 	char partitionMethod = cacheEntry->partitionMethod;
 	bool fastShardPruningPossible = false;
-	List *relationRestrictionList = NIL;
 	RelationRestriction *relationRestriction = NULL;
 
-	if (commandType == CMD_INSERT)
+
+	/*
+	 * Restriction context does not contain any restriction for insert queries.
+	 * It is only applicable to update/delete queries.
+	 */
+	if (commandType != CMD_INSERT)
 	{
-		/* create fake restriction context */
-		relationRestriction = (RelationRestriction *) palloc0(sizeof(RelationRestriction));
-		relationRestriction->rte = distributedTableRte;
-		relationRestriction->relationId = distributedTableId;
-		restrictionContext->relationRestrictionList = lappend(restrictionContext->relationRestrictionList, relationRestriction);
+		List *relationRestrictionList = restrictionContext->relationRestrictionList;
+		relationRestriction = (RelationRestriction *) linitial(relationRestrictionList);
 	}
 
-	relationRestrictionList = restrictionContext->relationRestrictionList;
-	Assert(list_length(relationRestrictionList) == 1);
-	relationRestriction = (RelationRestriction *) linitial(relationRestrictionList);
 
 	/* error out if no shards exist for the table */
 	shardCount = cacheEntry->shardIntervalArrayLength;
@@ -842,8 +840,6 @@ TargetShardIntervalForModify(Query *query, RelationRestrictionContext *restricti
 								   "shard")));
 		}
 	}
-
-	relationRestriction->prunedShardIntervalList = prunedShardList;
 
 	return (ShardInterval *) linitial(prunedShardList);
 }
@@ -952,7 +948,10 @@ QueryRestrictList(Query *query, RelationRestriction *relationRestriction)
 	else if (commandType == CMD_UPDATE || commandType == CMD_DELETE ||
 			 commandType == CMD_SELECT)
 	{
-		List *baseRestrictList = relationRestriction->relOptInfo->baserestrictinfo;
+		List *baseRestrictList = NIL;
+
+		Assert(relationRestriction != NULL);
+		baseRestrictList = relationRestriction->relOptInfo->baserestrictinfo;
 		queryRestrictList = get_all_actual_clauses(baseRestrictList);
 	}
 
