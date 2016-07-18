@@ -73,13 +73,15 @@ static bool MasterIrreducibleExpression(Node *expression, bool *varArgument,
 										bool *badCoalesce);
 static bool MasterIrreducibleExpressionWalker(Node *expression, WalkerState *state);
 static char MostPermissiveVolatileFlag(char left, char right);
-static Task * RouterModifyTask(Query *originalQuery, Query *query);
-static ShardInterval * TargetShardInterval(Query *query);
-static List * QueryRestrictList(Query *query);
+static Task * RouterModifyTask(Query *originalQuery, Query *query,
+							   RelationRestrictionContext *restrictionContext);
+static ShardInterval * TargetShardIntervalForModify(Query *query, RelationRestrictionContext *restrictionContext);
+static List * QueryRestrictList(Query *query, RelationRestriction *relationRestriction);
 static bool FastShardPruningPossible(CmdType commandType, char partitionMethod);
 static ShardInterval * FastShardPruning(Oid distributedTableId,
 										Const *partionColumnValue);
 static Oid ExtractFirstDistributedTableId(Query *query);
+static RangeTblEntry * ExtractFirstDistributedTableRte(Query *query);
 static Const * ExtractInsertPartitionValue(Query *query, Var *partitionColumn);
 static Task * RouterSelectTask(Query *originalQuery, Query *query,
 							   RelationRestrictionContext *restrictionContext,
@@ -131,7 +133,7 @@ MultiRouterPlanCreate(Query *originalQuery, Query *query,
 	if (modifyTask)
 	{
 		ErrorIfModifyQueryNotSupported(query);
-		task = RouterModifyTask(originalQuery, query);
+		task = RouterModifyTask(originalQuery, query, restrictionContext);
 		jobQuery = originalQuery;
 	}
 	else
@@ -698,9 +700,10 @@ MostPermissiveVolatileFlag(char left, char right)
  * shard-extended deparsed SQL to be run during execution.
  */
 static Task *
-RouterModifyTask(Query *originalQuery, Query *query)
+RouterModifyTask(Query *originalQuery, Query *query,
+				 RelationRestrictionContext *restrictionContext)
 {
-	ShardInterval *shardInterval = TargetShardInterval(query);
+	ShardInterval *shardInterval = TargetShardIntervalForModify(query, restrictionContext);
 	uint64 shardId = shardInterval->shardId;
 	StringInfo queryString = makeStringInfo();
 	Task *modifyTask = NULL;
@@ -732,7 +735,7 @@ RouterModifyTask(Query *originalQuery, Query *query)
 #endif
 
 
-	deparse_shard_query(query, shardInterval->relationId, shardId, queryString);
+	deparse_shard_query(originalQuery, shardInterval->relationId, shardId, queryString);
 	ereport(DEBUG4, (errmsg("distributed statement: %s", queryString->data)));
 
 	modifyTask = CitusMakeNode(Task);
@@ -749,25 +752,40 @@ RouterModifyTask(Query *originalQuery, Query *query)
 }
 
 
+
 /*
  * TargetShardInterval determines the single shard targeted by a provided command.
  * If no matching shards exist, or if the modification targets more than one one
  * shard, this function raises an error depending on the command type.
  */
 static ShardInterval *
-TargetShardInterval(Query *query)
+TargetShardIntervalForModify(Query *query, RelationRestrictionContext *restrictionContext)
 {
 	CmdType commandType = query->commandType;
 	bool selectTask = (commandType == CMD_SELECT);
 	List *prunedShardList = NIL;
 	int prunedShardCount = 0;
-
-
 	int shardCount = 0;
-	Oid distributedTableId = ExtractFirstDistributedTableId(query);
+	RangeTblEntry *distributedTableRte = ExtractFirstDistributedTableRte(query);
+	Oid distributedTableId = distributedTableRte->relid;
 	DistTableCacheEntry *cacheEntry = DistributedTableCacheEntry(distributedTableId);
 	char partitionMethod = cacheEntry->partitionMethod;
 	bool fastShardPruningPossible = false;
+	List *relationRestrictionList = NIL;
+	RelationRestriction *relationRestriction = NULL;
+
+	if (commandType == CMD_INSERT)
+	{
+		/* create fake restriction context */
+		relationRestriction = (RelationRestriction *) palloc0(sizeof(RelationRestriction));
+		relationRestriction->rte = distributedTableRte;
+		relationRestriction->relationId = distributedTableId;
+		restrictionContext->relationRestrictionList = lappend(restrictionContext->relationRestrictionList, relationRestriction);
+	}
+
+	relationRestrictionList = restrictionContext->relationRestrictionList;
+	Assert(list_length(relationRestrictionList) == 1);
+	relationRestriction = (RelationRestriction *) linitial(relationRestrictionList);
 
 	/* error out if no shards exist for the table */
 	shardCount = cacheEntry->shardIntervalArrayLength;
@@ -800,7 +818,7 @@ TargetShardInterval(Query *query)
 	}
 	else
 	{
-		List *restrictClauseList = QueryRestrictList(query);
+		List *restrictClauseList = QueryRestrictList(query, relationRestriction);
 		Index tableId = 1;
 		List *shardIntervalList = LoadShardIntervalList(distributedTableId);
 
@@ -824,6 +842,8 @@ TargetShardInterval(Query *query)
 								   "shard")));
 		}
 	}
+
+	relationRestriction->prunedShardIntervalList = prunedShardList;
 
 	return (ShardInterval *) linitial(prunedShardList);
 }
@@ -904,7 +924,7 @@ FastShardPruning(Oid distributedTableId, Const *partitionValue)
  * insert value.
  */
 static List *
-QueryRestrictList(Query *query)
+QueryRestrictList(Query *query, RelationRestriction *relationRestriction)
 {
 	List *queryRestrictList = NIL;
 	CmdType commandType = query->commandType;
@@ -932,7 +952,8 @@ QueryRestrictList(Query *query)
 	else if (commandType == CMD_UPDATE || commandType == CMD_DELETE ||
 			 commandType == CMD_SELECT)
 	{
-		queryRestrictList = WhereClauseList(query->jointree);
+		List *baseRestrictList = relationRestriction->relOptInfo->baserestrictinfo;
+		queryRestrictList = get_all_actual_clauses(baseRestrictList);
 	}
 
 	return queryRestrictList;
@@ -947,9 +968,24 @@ QueryRestrictList(Query *query)
 static Oid
 ExtractFirstDistributedTableId(Query *query)
 {
+	Oid distributedTableId = InvalidOid;
+	RangeTblEntry *rangeTableEntry = ExtractFirstDistributedTableRte(query);
+
+	if (rangeTableEntry != NULL)
+	{
+		distributedTableId = rangeTableEntry->relid;
+	}
+
+	return distributedTableId;
+}
+
+
+static RangeTblEntry *
+ExtractFirstDistributedTableRte(Query *query)
+{
 	List *rangeTableList = NIL;
 	ListCell *rangeTableCell = NULL;
-	Oid distributedTableId = InvalidOid;
+	RangeTblEntry *firstRte = NULL;
 
 	/* extract range table entries */
 	ExtractRangeTableEntryWalker((Node *) query, &rangeTableList);
@@ -960,12 +996,12 @@ ExtractFirstDistributedTableId(Query *query)
 
 		if (IsDistributedTable(rangeTableEntry->relid))
 		{
-			distributedTableId = rangeTableEntry->relid;
+			firstRte = rangeTableEntry;
 			break;
 		}
 	}
 
-	return distributedTableId;
+	return firstRte;
 }
 
 
