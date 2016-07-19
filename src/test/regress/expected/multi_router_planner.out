@@ -701,6 +701,108 @@ DEBUG:  Plan is router executable
  11814
 (1 row)
 
+	
+-- router plannable union queries are supported
+(SELECT * FROM articles_hash WHERE author_id = 1)
+UNION
+(SELECT * FROM articles_hash WHERE author_id = 3);
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  Creating router plan
+DEBUG:  Plan is router executable
+ id | author_id |    title     | word_count 
+----+-----------+--------------+------------
+  3 |         3 | asternal     |      10480
+ 43 |         3 | affixal      |      12723
+ 23 |         3 | abhorring    |       6799
+ 13 |         3 | aseyev       |       2255
+ 11 |         1 | alamo        |       1347
+ 41 |         1 | aznavour     |      11814
+  1 |         1 | arsenous     |       9572
+ 21 |         1 | arcading     |       5890
+ 31 |         1 | athwartships |       7271
+ 33 |         3 | autochrome   |       8180
+(10 rows)
+
+SELECT * FROM (
+	(SELECT * FROM articles_hash WHERE author_id = 1)
+	UNION
+	(SELECT * FROM articles_hash WHERE author_id = 3)) uu;
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  Creating router plan
+DEBUG:  Plan is router executable
+ id | author_id |    title     | word_count 
+----+-----------+--------------+------------
+  3 |         3 | asternal     |      10480
+ 43 |         3 | affixal      |      12723
+ 23 |         3 | abhorring    |       6799
+ 13 |         3 | aseyev       |       2255
+ 11 |         1 | alamo        |       1347
+ 41 |         1 | aznavour     |      11814
+  1 |         1 | arsenous     |       9572
+ 21 |         1 | arcading     |       5890
+ 31 |         1 | athwartships |       7271
+ 33 |         3 | autochrome   |       8180
+(10 rows)
+
+(SELECT LEFT(title, 1) FROM articles_hash WHERE author_id = 1)
+UNION
+(SELECT LEFT(title, 1) FROM articles_hash WHERE author_id = 3);
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  Creating router plan
+DEBUG:  Plan is router executable
+ left 
+------
+ a
+(1 row)
+
+(SELECT LEFT(title, 1) FROM articles_hash WHERE author_id = 1)
+INTERSECT
+(SELECT LEFT(title, 1) FROM articles_hash WHERE author_id = 3);
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  Creating router plan
+DEBUG:  Plan is router executable
+ left 
+------
+ a
+(1 row)
+
+(SELECT LEFT(title, 2) FROM articles_hash WHERE author_id = 1)
+EXCEPT
+(SELECT LEFT(title, 2) FROM articles_hash WHERE author_id = 3);
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  Creating router plan
+DEBUG:  Plan is router executable
+ left 
+------
+ at
+ az
+ ar
+ al
+(4 rows)
+
+-- union queries are not supported if not router plannable
+(SELECT * FROM articles_hash WHERE author_id = 1)
+UNION
+(SELECT * FROM articles_hash WHERE author_id = 2);
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  predicate pruning for shardId 840000
+DEBUG:  Found no worker with all shard placements
+ERROR:  cannot perform distributed planning on this query
+DETAIL:  Union, Intersect, or Except are currently unsupported
+SELECT * FROM (
+	(SELECT * FROM articles_hash WHERE author_id = 1)
+	UNION
+	(SELECT * FROM articles_hash WHERE author_id = 2)) uu;
+DEBUG:  predicate pruning for shardId 840001
+DEBUG:  predicate pruning for shardId 840000
+DEBUG:  Found no worker with all shard placements
+ERROR:  cannot perform distributed planning on this query
+DETAIL:  Subqueries without group by clause are not supported yet
 SET client_min_messages to 'NOTICE';
 -- error out for queries with repartition jobs
 SELECT *

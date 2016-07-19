@@ -293,6 +293,41 @@ SELECT max(word_count)
 	WHERE author_id = 1
 	GROUP BY author_id;
 
+	
+-- router plannable union queries are supported
+(SELECT * FROM articles_hash WHERE author_id = 1)
+UNION
+(SELECT * FROM articles_hash WHERE author_id = 3);
+
+SELECT * FROM (
+	(SELECT * FROM articles_hash WHERE author_id = 1)
+	UNION
+	(SELECT * FROM articles_hash WHERE author_id = 3)) uu;
+
+(SELECT LEFT(title, 1) FROM articles_hash WHERE author_id = 1)
+UNION
+(SELECT LEFT(title, 1) FROM articles_hash WHERE author_id = 3);
+
+(SELECT LEFT(title, 1) FROM articles_hash WHERE author_id = 1)
+INTERSECT
+(SELECT LEFT(title, 1) FROM articles_hash WHERE author_id = 3);
+
+(SELECT LEFT(title, 2) FROM articles_hash WHERE author_id = 1)
+EXCEPT
+(SELECT LEFT(title, 2) FROM articles_hash WHERE author_id = 3);
+
+-- union queries are not supported if not router plannable
+(SELECT * FROM articles_hash WHERE author_id = 1)
+UNION
+(SELECT * FROM articles_hash WHERE author_id = 2);
+
+
+SELECT * FROM (
+	(SELECT * FROM articles_hash WHERE author_id = 1)
+	UNION
+	(SELECT * FROM articles_hash WHERE author_id = 2)) uu;
+
+
 SET client_min_messages to 'NOTICE';
 -- error out for queries with repartition jobs
 SELECT *
