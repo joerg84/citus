@@ -419,7 +419,7 @@ ALTER TABLE test_schema_support.nation_hash ADD COLUMN new_col INT;
 -- verify column is added
 \d test_schema_support.nation_hash;
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
 \c - - - :master_port
 
 ALTER TABLE test_schema_support.nation_hash DROP COLUMN IF EXISTS non_existent_column;
@@ -428,7 +428,7 @@ ALTER TABLE test_schema_support.nation_hash DROP COLUMN IF EXISTS new_col;
 -- verify column is dropped
 \d test_schema_support.nation_hash;
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
 \c - - - :master_port
 
 --test with search_path is set
@@ -438,7 +438,7 @@ ALTER TABLE nation_hash ADD COLUMN new_col INT;
 -- verify column is added
 \d test_schema_support.nation_hash;
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
 \c - - - :master_port
 
 SET search_path TO test_schema_support;
@@ -448,7 +448,7 @@ ALTER TABLE nation_hash DROP COLUMN IF EXISTS new_col;
 -- verify column is dropped
 \d test_schema_support.nation_hash;
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
 \c - - - :master_port
 
 
@@ -461,7 +461,7 @@ CREATE INDEX index1 ON test_schema_support.nation_hash(n_name);
 --verify INDEX is created
 \d test_schema_support.nation_hash;
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
 \c - - - :master_port
 
 -- DROP index
@@ -470,28 +470,29 @@ DROP INDEX test_schema_support.index1;
 --verify INDEX is dropped
 \d test_schema_support.nation_hash;
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
 \c - - - :master_port
 
 --test with search_path is set
 SET search_path TO test_schema_support;
 
 -- CREATE index
-CREATE INDEX index1 ON nation_hash;
+CREATE INDEX index1 ON nation_hash(n_name);
 
 --verify INDEX is created
 \d test_schema_support.nation_hash;
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
 \c - - - :master_port
 
 -- DROP index
+SET search_path TO test_schema_support;
 DROP INDEX index1;
 
 --verify INDEX is dropped
 \d test_schema_support.nation_hash;
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
 \c - - - :master_port
 
 
@@ -500,7 +501,7 @@ SET search_path TO public;
 
 -- mark shard as inactive
 UPDATE pg_dist_shard_placement SET shardstate = 3 WHERE shardid = 1190000 and nodeport = :worker_1_port;
-SELECT master_copy_shard_placement(1190000, 'localhost', worker_2_port, 'localhost', worker_1_port);
+SELECT master_copy_shard_placement(1190000, 'localhost', :worker_2_port, 'localhost', :worker_1_port);
 
 -- verify shardstate
 SELECT * FROM pg_dist_shard_placement WHERE shardid = 1190000;
@@ -511,7 +512,7 @@ SET search_path TO test_schema_support;
 
 -- mark shard as inactive
 UPDATE pg_dist_shard_placement SET shardstate = 3 WHERE shardid = 1190000 and nodeport = :worker_1_port;
-SELECT master_copy_shard_placement(1190000, 'localhost', worker_2_port, 'localhost', worker_1_port);
+SELECT master_copy_shard_placement(1190000, 'localhost', :worker_2_port, 'localhost', :worker_1_port);
 
 -- verify shardstate
 SELECT * FROM pg_dist_shard_placement WHERE shardid = 1190000;

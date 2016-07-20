@@ -245,17 +245,22 @@ CopyDataFromFinalizedPlacement(Oid distributedTableId, int64 shardId,
 							   ShardPlacement *placementToRepair)
 {
 	char *relationName = get_rel_name(distributedTableId);
-	const char *shardName = NULL;
+	Oid shardSchemaOid = get_rel_namespace(distributedTableId);
+	const char *shardSchemaName = get_namespace_name(shardSchemaOid);
+
+	const char *shardTableName = NULL;
+	const char *shardQualifiedName = NULL;
 	StringInfo copyRelationQuery = makeStringInfo();
 	List *queryResultList = NIL;
 	bool copySuccessful = false;
 
 	AppendShardIdToName(&relationName, shardId);
-	shardName = quote_identifier(relationName);
+	shardTableName = quote_identifier(relationName);
+	shardQualifiedName = quote_qualified_identifier(shardSchemaName, shardTableName);
 
 	appendStringInfo(copyRelationQuery, WORKER_APPEND_TABLE_TO_SHARD,
-					 quote_literal_cstr(shardName), /* table to append */
-					 quote_literal_cstr(shardName), /* remote table name */
+					 quote_literal_cstr(shardQualifiedName), /* table to append */
+					 quote_literal_cstr(shardQualifiedName), /* remote table name */
 					 quote_literal_cstr(healthyPlacement->nodeName), /* remote host */
 					 healthyPlacement->nodePort); /* remote port */
 

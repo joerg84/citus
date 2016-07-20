@@ -574,35 +574,8 @@ ALTER TABLE test_schema_support.nation_hash ADD COLUMN new_col INT;
  new_col     | integer                | 
 
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
  Table "test_schema_support.nation_hash_1190003"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
- new_col     | integer                | 
-
- Table "test_schema_support.nation_hash_1190004"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
- new_col     | integer                | 
-
- Table "test_schema_support.nation_hash_1190005"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
- new_col     | integer                | 
-
- Table "test_schema_support.nation_hash_1190006"
    Column    |          Type          | Modifiers 
 -------------+------------------------+-----------
  n_nationkey | integer                | not null
@@ -626,32 +599,8 @@ ALTER TABLE test_schema_support.nation_hash DROP COLUMN IF EXISTS new_col;
  n_comment   | character varying(152) | 
 
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
  Table "test_schema_support.nation_hash_1190003"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190004"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190005"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190006"
    Column    |          Type          | Modifiers 
 -------------+------------------------+-----------
  n_nationkey | integer                | not null
@@ -675,35 +624,8 @@ ALTER TABLE nation_hash ADD COLUMN new_col INT;
  new_col     | integer                | 
 
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
  Table "test_schema_support.nation_hash_1190003"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
- new_col     | integer                | 
-
- Table "test_schema_support.nation_hash_1190004"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
- new_col     | integer                | 
-
- Table "test_schema_support.nation_hash_1190005"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
- new_col     | integer                | 
-
- Table "test_schema_support.nation_hash_1190006"
    Column    |          Type          | Modifiers 
 -------------+------------------------+-----------
  n_nationkey | integer                | not null
@@ -728,32 +650,8 @@ ALTER TABLE nation_hash DROP COLUMN IF EXISTS new_col;
  n_comment   | character varying(152) | 
 
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
  Table "test_schema_support.nation_hash_1190003"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190004"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190005"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190006"
    Column    |          Type          | Modifiers 
 -------------+------------------------+-----------
  n_nationkey | integer                | not null
@@ -779,7 +677,7 @@ Indexes:
     "index1" btree (n_name)
 
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
  Table "test_schema_support.nation_hash_1190003"
    Column    |          Type          | Modifiers 
 -------------+------------------------+-----------
@@ -789,36 +687,6 @@ Indexes:
  n_comment   | character varying(152) | 
 Indexes:
     "index1_1190003" btree (n_name)
-
- Table "test_schema_support.nation_hash_1190004"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-Indexes:
-    "index1_1190004" btree (n_name)
-
- Table "test_schema_support.nation_hash_1190005"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-Indexes:
-    "index1_1190005" btree (n_name)
-
- Table "test_schema_support.nation_hash_1190006"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-Indexes:
-    "index1_1190006" btree (n_name)
 
 \c - - - :master_port
 -- DROP index
@@ -834,32 +702,8 @@ DROP INDEX test_schema_support.index1;
  n_comment   | character varying(152) | 
 
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
  Table "test_schema_support.nation_hash_1190003"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190004"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190005"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190006"
    Column    |          Type          | Modifiers 
 -------------+------------------------+-----------
  n_nationkey | integer                | not null
@@ -871,10 +715,7 @@ DROP INDEX test_schema_support.index1;
 --test with search_path is set
 SET search_path TO test_schema_support;
 -- CREATE index
-CREATE INDEX index1 ON nation_hash;
-ERROR:  syntax error at or near ";"
-LINE 1: CREATE INDEX index1 ON nation_hash;
-                                          ^
+CREATE INDEX index1 ON nation_hash(n_name);
 --verify INDEX is created
 \d test_schema_support.nation_hash;
      Table "test_schema_support.nation_hash"
@@ -884,9 +725,11 @@ LINE 1: CREATE INDEX index1 ON nation_hash;
  n_name      | character(25)          | not null
  n_regionkey | integer                | not null
  n_comment   | character varying(152) | 
+Indexes:
+    "index1" btree (n_name)
 
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
  Table "test_schema_support.nation_hash_1190003"
    Column    |          Type          | Modifiers 
 -------------+------------------------+-----------
@@ -894,35 +737,13 @@ LINE 1: CREATE INDEX index1 ON nation_hash;
  n_name      | character(25)          | not null
  n_regionkey | integer                | not null
  n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190004"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190005"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190006"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
+Indexes:
+    "index1_1190003" btree (n_name)
 
 \c - - - :master_port
 -- DROP index
+SET search_path TO test_schema_support;
 DROP INDEX index1;
-ERROR:  index "index1" does not exist
 --verify INDEX is dropped
 \d test_schema_support.nation_hash;
      Table "test_schema_support.nation_hash"
@@ -934,32 +755,8 @@ ERROR:  index "index1" does not exist
  n_comment   | character varying(152) | 
 
 \c - - - :worker_1_port
-\d test_schema_support.nation_hash_119*;
+\d test_schema_support.nation_hash_1190003;
  Table "test_schema_support.nation_hash_1190003"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190004"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190005"
-   Column    |          Type          | Modifiers 
--------------+------------------------+-----------
- n_nationkey | integer                | not null
- n_name      | character(25)          | not null
- n_regionkey | integer                | not null
- n_comment   | character varying(152) | 
-
- Table "test_schema_support.nation_hash_1190006"
    Column    |          Type          | Modifiers 
 -------------+------------------------+-----------
  n_nationkey | integer                | not null
@@ -972,31 +769,35 @@ ERROR:  index "index1" does not exist
 SET search_path TO public;
 -- mark shard as inactive
 UPDATE pg_dist_shard_placement SET shardstate = 3 WHERE shardid = 1190000 and nodeport = :worker_1_port;
-SELECT master_copy_shard_placement(1190000, 'localhost', worker_2_port, 'localhost', worker_1_port);
-ERROR:  column "worker_2_port" does not exist
-LINE 1: ...master_copy_shard_placement(1190000, 'localhost', worker_2_p...
-                                                             ^
+SELECT master_copy_shard_placement(1190000, 'localhost', :worker_2_port, 'localhost', :worker_1_port);
+ master_copy_shard_placement 
+-----------------------------
+ 
+(1 row)
+
 -- verify shardstate
 SELECT * FROM pg_dist_shard_placement WHERE shardid = 1190000;
  shardid | shardstate | shardlength | nodename  | nodeport 
 ---------+------------+-------------+-----------+----------
  1190000 |          1 |        8192 | localhost |    57638
- 1190000 |          3 |        8192 | localhost |    57637
+ 1190000 |          1 |           0 | localhost |    57637
 (2 rows)
 
 --test with search_path is set
 SET search_path TO test_schema_support;
 -- mark shard as inactive
 UPDATE pg_dist_shard_placement SET shardstate = 3 WHERE shardid = 1190000 and nodeport = :worker_1_port;
-SELECT master_copy_shard_placement(1190000, 'localhost', worker_2_port, 'localhost', worker_1_port);
-ERROR:  column "worker_2_port" does not exist
-LINE 1: ...master_copy_shard_placement(1190000, 'localhost', worker_2_p...
-                                                             ^
+SELECT master_copy_shard_placement(1190000, 'localhost', :worker_2_port, 'localhost', :worker_1_port);
+ master_copy_shard_placement 
+-----------------------------
+ 
+(1 row)
+
 -- verify shardstate
 SELECT * FROM pg_dist_shard_placement WHERE shardid = 1190000;
  shardid | shardstate | shardlength | nodename  | nodeport 
 ---------+------------+-------------+-----------+----------
  1190000 |          1 |        8192 | localhost |    57638
- 1190000 |          3 |        8192 | localhost |    57637
+ 1190000 |          1 |           0 | localhost |    57637
 (2 rows)
 
