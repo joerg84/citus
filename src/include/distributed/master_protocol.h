@@ -88,10 +88,9 @@ extern bool CStoreTable(Oid relationId);
 extern Oid ResolveRelationId(text *relationName);
 extern List * GetTableDDLEvents(Oid relationId);
 extern void CheckDistributedTable(Oid relationId);
-extern void CreateShardPlacements(Oid distributedTableId, int64 shardId,
-								  List *ddlEventList, char *newPlacementOwner,
-								  List *workerNodeList, int workerStartIndex,
-								  int replicationFactor);
+extern void CreateShardPlacements(Oid relationId, int64 shardId, List *ddlEventList,
+								  char *newPlacementOwner, List *workerNodeList,
+								  int workerStartIndex, int replicationFactor);
 extern uint64 UpdateShardStatistics(int64 shardId);
 
 /* Function declarations for generating metadata for shard creation */

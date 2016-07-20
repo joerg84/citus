@@ -377,7 +377,7 @@ CheckDistributedTable(Oid relationId)
  * nodes if some DDL commands had been successful).
  */
 void
-CreateShardPlacements(Oid distributedTableId, int64 shardId, List *ddlEventList,
+CreateShardPlacements(Oid relationId, int64 shardId, List *ddlEventList,
 					  char *newPlacementOwner, List *workerNodeList,
 					  int workerStartIndex, int replicationFactor)
 {
@@ -399,7 +399,7 @@ CreateShardPlacements(Oid distributedTableId, int64 shardId, List *ddlEventList,
 		char *nodeName = workerNode->workerName;
 		uint32 nodePort = workerNode->workerPort;
 
-		bool created = WorkerCreateShard(distributedTableId, nodeName, nodePort, shardId,
+		bool created = WorkerCreateShard(relationId, nodeName, nodePort, shardId,
 										 newPlacementOwner, ddlEventList);
 		if (created)
 		{
@@ -441,6 +441,7 @@ WorkerCreateShard(Oid distributedTableId, char *nodeName, uint32 nodePort,
 {
 	Oid schemaId = get_rel_namespace(distributedTableId);
 	char *schemaName = get_namespace_name(schemaId);
+	char *escapedSchemaName = quote_literal_cstr(schemaName);
 	bool shardCreated = true;
 	ListCell *ddlCommandCell = NULL;
 
@@ -449,10 +450,10 @@ WorkerCreateShard(Oid distributedTableId, char *nodeName, uint32 nodePort,
 		char *ddlCommand = (char *) lfirst(ddlCommandCell);
 		char *escapedDDLCommand = quote_literal_cstr(ddlCommand);
 		List *queryResultList = NIL;
-
 		StringInfo applyDDLCommand = makeStringInfo();
+
 		appendStringInfo(applyDDLCommand, WORKER_APPLY_SHARD_DDL_COMMAND, shardId,
-						 quote_literal_cstr(schemaName), escapedDDLCommand);
+						 escapedSchemaName, escapedDDLCommand);
 
 		queryResultList = ExecuteRemoteQuery(nodeName, nodePort, newShardOwner,
 											 applyDDLCommand);

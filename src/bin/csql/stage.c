@@ -1395,7 +1395,7 @@ ApplyShardDDLCommand(PGconn *workerNode, uint64 shardId, const char *ddlCommand)
 	snprintf(shardIdString, NAMEDATALEN, UINT64_FORMAT, shardId);
 
 	/*
-	 * We changes worker_apply_shard_ddl_command and now it requires schema name. Since
+	 * We changed worker_apply_shard_ddl_command and now it requires schema name. Since
 	 * \STAGE will be deprecated anyway, we use public schema for everything to make it
 	 * work with worker_apply_shard_ddl_command. Please note that if user specifies
 	 * schema name, this will not override it, because we prioritize schema names given
