@@ -299,3 +299,29 @@ WHERE  sp.shardid = s.shardid
 AND    sp.shardstate = 1
 AND    (s.logicalrelid = 'objects'::regclass OR
 	    s.logicalrelid = 'labs'::regclass);
+
+-- what if one shard (objects) succeeds but another (labs) completely fails?
+\c - - - :worker_2_port
+
+DROP TRIGGER reject_bad ON objects_1200003;
+
+\c - - - :master_port
+
+BEGIN;
+INSERT INTO objects VALUES (1, 'apple');
+INSERT INTO labs VALUES (8, 'Aperture Science');
+INSERT INTO labs VALUES (9, 'BAD');
+COMMIT;
+
+-- data to objects should be persisted, but labs should not...
+SELECT * FROM objects WHERE id = 1;
+SELECT * FROM labs WHERE id = 8;
+
+-- labs should be healthy, but one object placement shouldn't be
+SELECT s.logicalrelid::regclass::text, sp.shardstate, count(*)
+FROM   pg_dist_shard_placement AS sp,
+	   pg_dist_shard           AS s
+WHERE  sp.shardid = s.shardid
+AND    (s.logicalrelid = 'objects'::regclass OR
+	    s.logicalrelid = 'labs'::regclass)
+GROUP BY  s.logicalrelid,sp.shardstate;
