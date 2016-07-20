@@ -38,6 +38,7 @@ static bool TypeAddIndexConstraint(const AlterTableCmd *command);
 static bool TypeDropIndexConstraint(const AlterTableCmd *command,
 									const RangeVar *relation, uint64 shardId);
 static void AppendShardIdToConstraintName(AlterTableCmd *command, uint64 shardId);
+static void SetSchemaNameIfNotExist(char **schemaName, char *newSchemaName);
 
 
 /*
@@ -66,10 +67,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 			char **sequenceSchemaName = &(alterSeqStmt->sequence->schemaname);
 
 			/* prefix with schema name if it is not added already */
-			if ((*sequenceSchemaName) == NULL)
-			{
-				*sequenceSchemaName = pstrdup(schemaName);
-			}
+			SetSchemaNameIfNotExist(sequenceSchemaName, schemaName);
 
 			AppendShardIdToName(sequenceName, shardId);
 			break;
@@ -93,10 +91,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 			ListCell *commandCell = NULL;
 
 			/* prefix with schema name if it is not added already */
-			if ((*relationSchemaName) == NULL)
-			{
-				*relationSchemaName = pstrdup(schemaName);
-			}
+			SetSchemaNameIfNotExist(relationSchemaName, schemaName);
 
 			/* append shardId to base relation name */
 			AppendShardIdToName(relationName, shardId);
@@ -136,10 +131,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 			relationSchemaName = &(clusterStmt->relation->schemaname);
 
 			/* prefix with schema name if it is not added already */
-			if ((*relationSchemaName) == NULL)
-			{
-				*relationSchemaName = pstrdup(schemaName);
-			}
+			SetSchemaNameIfNotExist(relationSchemaName, schemaName);
 
 			AppendShardIdToName(relationName, shardId);
 
@@ -159,10 +151,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 			char **sequenceSchemaName = &(createSeqStmt->sequence->schemaname);
 
 			/* prefix with schema name if it is not added already */
-			if ((*sequenceSchemaName) == NULL)
-			{
-				*sequenceSchemaName = pstrdup(schemaName);
-			}
+			SetSchemaNameIfNotExist(sequenceSchemaName, schemaName);
 
 			AppendShardIdToName(sequenceName, shardId);
 			break;
@@ -198,10 +187,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 			char **relationSchemaName = &(createStmt->relation->schemaname);
 
 			/* prefix with schema name if it is not added already */
-			if ((*relationSchemaName) == NULL)
-			{
-				*relationSchemaName = pstrdup(schemaName);
-			}
+			SetSchemaNameIfNotExist(relationSchemaName, schemaName);
 
 			AppendShardIdToName(relationName, shardId);
 			break;
@@ -347,10 +333,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 			}
 
 			/* prefix with schema name if it is not added already */
-			if ((*relationSchemaName) == NULL)
-			{
-				*relationSchemaName = pstrdup(schemaName);
-			}
+			SetSchemaNameIfNotExist(relationSchemaName, schemaName);
 
 			AppendShardIdToName(relationName, shardId);
 			AppendShardIdToName(indexName, shardId);
@@ -369,10 +352,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 				char **objectSchemaName = &(reindexStmt->relation->schemaname);
 
 				/* prefix with schema name if it is not added already */
-				if ((*objectSchemaName) == NULL)
-				{
-					*objectSchemaName = pstrdup(schemaName);
-				}
+				SetSchemaNameIfNotExist(objectSchemaName, schemaName);
 
 				AppendShardIdToName(objectName, shardId);
 			}
@@ -388,10 +368,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 				char **objectSchemaName = &(reindexStmt->relation->schemaname);
 
 				/* prefix with schema name if it is not added already */
-				if ((*objectSchemaName) == NULL)
-				{
-					*objectSchemaName = pstrdup(schemaName);
-				}
+				SetSchemaNameIfNotExist(objectSchemaName, schemaName);
 
 				AppendShardIdToName(objectName, shardId);
 			}
@@ -422,10 +399,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 				char **objectSchemaName = &(renameStmt->relation->schemaname);
 
 				/* prefix with schema name if it is not added already */
-				if ((*objectSchemaName) == NULL)
-				{
-					*objectSchemaName = pstrdup(schemaName);
-				}
+				SetSchemaNameIfNotExist(objectSchemaName, schemaName);
 
 				AppendShardIdToName(oldRelationName, shardId);
 				AppendShardIdToName(newRelationName, shardId);
@@ -436,10 +410,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 				char **objectSchemaName = &(renameStmt->relation->schemaname);
 
 				/* prefix with schema name if it is not added already */
-				if ((*objectSchemaName) == NULL)
-				{
-					*objectSchemaName = pstrdup(schemaName);
-				}
+				SetSchemaNameIfNotExist(objectSchemaName, schemaName);
 
 				AppendShardIdToName(relationName, shardId);
 			}
@@ -604,6 +575,14 @@ AppendShardIdToConstraintName(AlterTableCmd *command, uint64 shardId)
 }
 
 
+static void
+SetSchemaNameIfNotExist(char **schemaName, char *newSchemaName)
+{
+	if ((*schemaName) == NULL)
+	{
+		*schemaName = pstrdup(newSchemaName);
+	}
+}
 /*
  * AppendShardIdToName appends shardId to the given name. The function takes in
  * the name's address in order to reallocate memory for the name in the same
