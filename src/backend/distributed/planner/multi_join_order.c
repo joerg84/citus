@@ -52,6 +52,7 @@ static JoinOrderNode * CreateFirstJoinOrderNode(FromExpr *fromExpr,
 												List *tableEntryList);
 static bool JoinExprListWalker(Node *node, List **joinList);
 static bool ExtractLeftMostRangeTableIndex(Node *node, int *rangeTableIndex);
+static RangeTblRef * GetRightRangeTableRef(Node *joinExprRightArg);
 static List * MergeShardIntervals(List *leftShardIntervalList,
 								  List *rightShardIntervalList, JoinType joinType);
 static bool ShardIntervalsMatch(List *leftShardIntervalList,
@@ -165,7 +166,7 @@ FixedJoinOrderList(FromExpr *fromExpr, List *tableEntryList)
 		List *candidateShardList = NIL;
 
 		/* get the table on the right hand side of the join */
-		nextRangeTableRef = (RangeTblRef *) joinExpr->rarg;
+		nextRangeTableRef = GetRightRangeTableRef(joinExpr->rarg);
 		nextTable = FindTableEntry(tableEntryList, nextRangeTableRef->rtindex);
 
 		if (joinType == JOIN_INNER)
@@ -394,6 +395,42 @@ ExtractLeftMostRangeTableIndex(Node *node, int *rangeTableIndex)
 	}
 
 	return walkerResult;
+}
+
+
+/*
+ * GetRightRangeTableRef returns the range table reference from the right
+ * branch of a join expression. Right child of the join expresion is expected
+ * to be RangeTblRef*. When postgresql standard planner flattens a multi level
+ * query into a single one it tweaks join expr tree and puts FromExpr * into
+ * rarg field. Depending on the depth of the original query there could be
+ * nested FromExpr * inside the other one as the only element in fromList.
+ */
+static RangeTblRef *
+GetRightRangeTableRef(Node *joinExprRightArg)
+{
+	RangeTblRef *rangeTableRef  = NULL;
+	if (IsA(joinExprRightArg, RangeTblRef))
+	{
+		rangeTableRef = (RangeTblRef *) joinExprRightArg;
+	}
+	else if (IsA(joinExprRightArg, FromExpr))
+	{
+		FromExpr *fromExpr = (FromExpr *) joinExprRightArg;
+		Node *firstNode = NULL;
+
+		Assert(list_length(fromExpr->fromlist) == 1);
+		firstNode = (Node *) linitial(fromExpr->fromlist);
+		rangeTableRef = GetRightRangeTableRef(firstNode);
+	}
+	else
+	{
+		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("cannot perform distributed planning on this query"),
+						errdetail("Unexpected join tree")));
+	}
+
+	return rangeTableRef;
 }
 
 
