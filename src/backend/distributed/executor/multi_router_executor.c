@@ -115,6 +115,12 @@ RouterExecutorStart(QueryDesc *queryDesc, int eflags, Task *task)
 	{
 		eflags |= EXEC_FLAG_SKIP_TRIGGERS;
 
+		/*
+		 * We could naturally handle function-based transactions (i.e. those
+		 * using PL/pgSQL or similar) by checking the type of queryDesc->dest,
+		 * but some customers already use functions that touch multiple shards
+		 * from within a function, so we'll ignore functions for now.
+		 */
 		if (IsTransactionBlock() && xactParticipantHash == NULL)
 		{
 			InitTransactionStateForTask(task);
