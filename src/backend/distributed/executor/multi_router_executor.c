@@ -22,7 +22,6 @@
 #include "distributed/citus_clauses.h"
 #include "distributed/citus_ruleutils.h"
 #include "distributed/connection_cache.h"
-#include "distributed/datautils.h"
 #include "distributed/listutils.h"
 #include "distributed/metadata_cache.h"
 #include "distributed/multi_executor.h"
