@@ -53,9 +53,15 @@ bool AllModificationsCommutative = false;
  * multi-statement transactions managed by the router executor. After the first
  * modification within a transaction (whether started by the use of a function
  * or the use of BEGIN), the executor populates a hash with the transaction's
- * initial participants (the nodes hit by that initial modification). Beyond
- * that, there's a flag to track when a user tries to roll back to a savepoint
- * (not allowed) and a backend startup hook to register xact callbacks.
+ * initial participants (the nodes hit by that initial modification).
+ *
+ * To keep track of the reverse mapping (from shards to nodes), we have a list
+ * of XactShardConnSets, which map a shard identifier to a set of connection
+ * hash entries. This list is walked by MarkRemainingInactivePlacements to
+ * ensure we mark placements as failed if they reject a COMMIT.
+ *
+ * Beyond that, there's a flag to track when a user tries to roll back to a
+ * savepoint (not allowed) and a backend hook to register xact callbacks.
  */
 static HTAB *xactParticipantHash = NULL;
 static List *xactShardConnSetList = NIL;
@@ -88,7 +94,7 @@ static PGconn * GetConnectionForPlacement(ShardPlacement *placement,
 static void PurgeConnectionForPlacement(ShardPlacement *placement);
 static void RecordShardIdParticipant(uint64 affectedShardId,
 									 NodeConnectionEntry *participantEntry);
-static void MarkRemainingInactivePlacements();
+static void MarkRemainingInactivePlacements(void);
 
 
 /*
@@ -159,12 +165,9 @@ RouterExecutorStart(QueryDesc *queryDesc, int eflags, Task *task)
 static void
 InitTransactionStateForTask(Task *task)
 {
-	MemoryContext oldContext = NULL;
 	ListCell *placementCell = NULL;
 
 	xactParticipantHash = CreateXactParticipantHash();
-
-	oldContext = MemoryContextSwitchTo(TopTransactionContext);
 
 	foreach(placementCell, task->taskPlacementList)
 	{
@@ -202,8 +205,6 @@ InitTransactionStateForTask(Task *task)
 
 		participantEntry->connection = connection;
 	}
-
-	MemoryContextSwitchTo(oldContext);
 
 	IsModifyingTransaction = true;
 }
@@ -1175,6 +1176,7 @@ PurgeConnectionForPlacement(ShardPlacement *placement)
 
 		Assert(IsTransactionBlock());
 
+		/* the participant hash doesn't use the user field */
 		MemSet(&nodeKey.nodeUser, 0, sizeof(nodeKey.nodeUser));
 		participantEntry = hash_search(xactParticipantHash, &nodeKey, HASH_FIND,
 									   &entryFound);
@@ -1186,6 +1188,10 @@ PurgeConnectionForPlacement(ShardPlacement *placement)
 }
 
 
+/*
+ * RecordShardIdParticipant registers a connection as being involved with a
+ * particular shard during a multi-statement transaction.
+ */
 static void
 RecordShardIdParticipant(uint64 affectedShardId, NodeConnectionEntry *participantEntry)
 {
@@ -1194,6 +1200,7 @@ RecordShardIdParticipant(uint64 affectedShardId, NodeConnectionEntry *participan
 	MemoryContext oldContext = NULL;
 	List *connectionEntryList = NIL;
 
+	/* check whether an entry already exists for this shard */
 	foreach(listCell, xactShardConnSetList)
 	{
 		XactShardConnSet *shardConnSet = (XactShardConnSet *) lfirst(listCell);
@@ -1204,8 +1211,10 @@ RecordShardIdParticipant(uint64 affectedShardId, NodeConnectionEntry *participan
 		}
 	}
 
+	/* entries must last through the whole top-level transaction */
 	oldContext = MemoryContextSwitchTo(TopTransactionContext);
 
+	/* if no entry found, make one */
 	if (shardConnSetMatch == NULL)
 	{
 		shardConnSetMatch = (XactShardConnSet *) palloc0(sizeof(XactShardConnSet));
@@ -1214,6 +1223,7 @@ RecordShardIdParticipant(uint64 affectedShardId, NodeConnectionEntry *participan
 		xactShardConnSetList = lappend(xactShardConnSetList, shardConnSetMatch);
 	}
 
+	/* add connection, avoiding duplicates */
 	connectionEntryList = shardConnSetMatch->connectionEntryList;
 	shardConnSetMatch->connectionEntryList = list_append_unique_ptr(connectionEntryList,
 																	participantEntry);
@@ -1222,8 +1232,17 @@ RecordShardIdParticipant(uint64 affectedShardId, NodeConnectionEntry *participan
 }
 
 
+/*
+ * MarkRemainingInactivePlacements takes care of marking placements of a shard
+ * inactive after some of the placements rejected the final COMMIT phase of a
+ * transaction. This step is skipped if all placements reject the COMMIT, since
+ * in that case no modifications to the placement have persisted.
+ *
+ * Failures are detected by checking the connection field of the entries in the
+ * connection set for each shard: it is always set to NULL after errors.
+ */
 static void
-MarkRemainingInactivePlacements()
+MarkRemainingInactivePlacements(void)
 {
 	ListCell *shardConnSetCell = NULL;
 
@@ -1232,24 +1251,28 @@ MarkRemainingInactivePlacements()
 		XactShardConnSet *shardConnSet = (XactShardConnSet *) lfirst(shardConnSetCell);
 		List *participantList = shardConnSet->connectionEntryList;
 		ListCell *participantCell = NULL;
-		int successes = list_length(participantList);
+		int successes = list_length(participantList); /* assume full success */
 
+		/* determine how many actual successes there were: subtract failures */
 		foreach(participantCell, participantList)
 		{
 			NodeConnectionEntry *participant = NULL;
 			participant = (NodeConnectionEntry *) lfirst(participantCell);
 
+			/* other codes sets connection to NULL after errors */
 			if (participant->connection == NULL)
 			{
 				successes--;
 			}
 		}
 
+		/* if no nodes succeeded for this shard, don't do anything */
 		if (successes == 0)
 		{
 			continue;
 		}
 
+		/* otherwise, ensure failed placements are marked inactive */
 		foreach(participantCell, participantList)
 		{
 			NodeConnectionEntry *participant = NULL;

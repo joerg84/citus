@@ -17,13 +17,14 @@
 
 
 /*
- * XactParticipantKey acts as the key to index into the (transaction-local)
- * hash keeping track of transaction connections and shards.
+ * XactShardConnSet keeps track of the mapping from shard to the set of nodes
+ * involved in multi-statement transaction-wrapped modifications of that shard.
+ * This information is used to mark placements inactive at transaction close.
  */
 typedef struct XactShardConnSet
 {
-	uint64 shardId;
-	List *connectionEntryList;
+	uint64 shardId;            /* identifier of the shard that was modified */
+	List *connectionEntryList; /* NodeConnectionEntry pointers to participating nodes */
 } XactShardConnSet;
 
 
