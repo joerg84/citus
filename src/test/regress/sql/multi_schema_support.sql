@@ -338,7 +338,7 @@ SELECT master_create_distributed_table('test_schema_support.nation_hash_collatio
 SELECT master_create_worker_shards('test_schema_support.nation_hash_collation', 4, 2);
 
 \COPY test_schema_support.nation_hash_collation FROM STDIN with delimiter '|';
-0|ALGERIA|0| haggle. carefully final deposits detect slyly agai
+0|ALGERIA|0|haggle. carefully final deposits detect slyly agai
 1|ARGENTINA|1|al foxes promise slyly according to the regular accounts. bold requests alon
 2|BRAZIL|1|y alongside of the pending deposits. carefully special packages are about the ironic forges. slyly special 
 3|CANADA|1|eas hang ironic, silent packages. slyly regular packages are furiously over the tithes. fluffily bold
@@ -361,7 +361,7 @@ SELECT master_create_distributed_table('nation_hash_collation_search_path', 'n_n
 SELECT master_create_worker_shards('nation_hash_collation_search_path', 4, 2);
 
 \COPY nation_hash_collation_search_path FROM STDIN with delimiter '|';
-0|ALGERIA|0| haggle. carefully final deposits detect slyly agai
+0|ALGERIA|0|haggle. carefully final deposits detect slyly agai
 1|ARGENTINA|1|al foxes promise slyly according to the regular accounts. bold requests alon
 2|BRAZIL|1|y alongside of the pending deposits. carefully special packages are about the ironic forges. slyly special 
 3|CANADA|1|eas hang ironic, silent packages. slyly regular packages are furiously over the tithes. fluffily bold
