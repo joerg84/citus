@@ -293,10 +293,7 @@ RelayEventExtendNames(Node *parseTree, char *schemaName, uint64 shardId)
 					char **relationSchemaName = &(relation->schemaname);
 
 					/* prefix with schema name if it is not added already */
-					if ((*relationSchemaName) == NULL)
-					{
-						*relationSchemaName = pstrdup(schemaName);
-					}
+					SetSchemaNameIfNotExist(relationSchemaName, schemaName);
 
 					AppendShardIdToName(relationName, shardId);
 				}
@@ -574,7 +571,10 @@ AppendShardIdToConstraintName(AlterTableCmd *command, uint64 shardId)
 	}
 }
 
-
+/*
+ * SetSchemaNameIfNotExist function checks whether schemaName is set and if it is not set
+ * it sets its value to given newSchemaName.
+ */
 static void
 SetSchemaNameIfNotExist(char **schemaName, char *newSchemaName)
 {
@@ -583,6 +583,8 @@ SetSchemaNameIfNotExist(char **schemaName, char *newSchemaName)
 		*schemaName = pstrdup(newSchemaName);
 	}
 }
+
+
 /*
  * AppendShardIdToName appends shardId to the given name. The function takes in
  * the name's address in order to reallocate memory for the name in the same

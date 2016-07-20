@@ -40,7 +40,7 @@
 
 
 /* Local functions forward declarations */
-static bool WorkerCreateShard(Oid distributedTableId, char *nodeName, uint32 nodePort,
+static bool WorkerCreateShard(Oid relationId, char *nodeName, uint32 nodePort,
 							  uint64 shardId, char *newShardOwner, List *ddlCommandList);
 static bool WorkerShardStats(char *nodeName, uint32 nodePort, Oid relationId,
 							 char *shardName, uint64 *shardSize,
@@ -436,10 +436,10 @@ CreateShardPlacements(Oid relationId, int64 shardId, List *ddlEventList,
  * each DDL command, and could leave the shard in an half-initialized state.
  */
 static bool
-WorkerCreateShard(Oid distributedTableId, char *nodeName, uint32 nodePort,
+WorkerCreateShard(Oid relationId, char *nodeName, uint32 nodePort,
 				  uint64 shardId, char *newShardOwner, List *ddlCommandList)
 {
-	Oid schemaId = get_rel_namespace(distributedTableId);
+	Oid schemaId = get_rel_namespace(relationId);
 	char *schemaName = get_namespace_name(schemaId);
 	char *escapedSchemaName = quote_literal_cstr(schemaName);
 	bool shardCreated = true;
