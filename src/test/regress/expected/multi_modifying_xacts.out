@@ -138,7 +138,7 @@ COMMIT;
 BEGIN;
 INSERT INTO labs VALUES (6, 'Bell Labs');
 \copy labs from stdin delimiter ','
-ERROR:  cannot open new connection during modifying transaction
+ERROR:  cannot open new connections after the first modification command within a transaction
 CONTEXT:  COPY labs, line 1: "7,E Corp"
 COMMIT;
 -- now, for some special failures...

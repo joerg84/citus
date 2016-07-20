@@ -384,8 +384,8 @@ ConnectToNode(char *nodeName, int32 nodePort, char *nodeUser)
 	if (IsModifyingTransaction)
 	{
 		ereport(ERROR, (errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-						errmsg("cannot open new connection during modifying "
-							   "transaction")));
+						errmsg("cannot open new connections after the first modification "
+							   "command within a transaction")));
 	}
 
 	Assert(sizeof(keywordArray) == sizeof(valueArray));

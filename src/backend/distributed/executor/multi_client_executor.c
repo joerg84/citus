@@ -97,8 +97,8 @@ MultiClientConnect(const char *nodeName, uint32 nodePort, const char *nodeDataba
 	if (IsModifyingTransaction)
 	{
 		ereport(ERROR, (errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-						errmsg("cannot open new connection during modifying "
-							   "transaction")));
+						errmsg("cannot open new connections after the first modification "
+							   "command within a transaction")));
 	}
 
 	if (connectionId == INVALID_CONNECTION_ID)
@@ -184,8 +184,8 @@ MultiClientConnectStart(const char *nodeName, uint32 nodePort, const char *nodeD
 	if (IsModifyingTransaction)
 	{
 		ereport(ERROR, (errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-						errmsg("cannot open new connection during modifying "
-							   "transaction")));
+						errmsg("cannot open new connections after the first modification "
+							   "command within a transaction")));
 	}
 
 	/* transcribe connection paremeters to string */
