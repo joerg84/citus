@@ -571,6 +571,7 @@ AppendShardIdToConstraintName(AlterTableCmd *command, uint64 shardId)
 	}
 }
 
+
 /*
  * SetSchemaNameIfNotExist function checks whether schemaName is set and if it is not set
  * it sets its value to given newSchemaName.
